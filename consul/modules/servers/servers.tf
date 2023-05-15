@@ -92,6 +92,7 @@ resource "docker_container" "server" {
     # "CONSUL_ALLOW_PRIVILEGED_PORTS=1",
   ]
 
+  # https://developer.hashicorp.com/consul/docs/agent/config/cli-flags
   command = [
     "consul", "agent", "-server", "-ui",
     "-node=${local.qname}",
