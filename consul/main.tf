@@ -24,16 +24,26 @@ locals {
 }
 
 module "networks" {
-  source = "./modules/networks"
+  source = "../networks"
 }
 
 module "server" {
-  source              = "./modules/servers"
+  source              = "./server"
   count               = var.consul_server_count
   instance            = count.index
-  network_management  = module.networks.management
+  # network_management  = module.networks.management
   network_application = module.networks.application
   runtime_dir         = local.runtime_dir
   datacenter          = var.consul_datacenter
   quorem              = var.consul_server_quorem
+}
+
+module "client" {
+  source              = "./client"
+  count               = var.consul_client_count
+  instance            = count.index
+  # network_management  = module.networks.management
+  network_application = module.networks.application
+  runtime_dir         = local.runtime_dir
+  datacenter          = var.consul_datacenter
 }
