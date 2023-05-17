@@ -10,6 +10,12 @@ terraform {
   }
 }
 
+# set -gx TF_VAR_docker_sock ...
+variable "docker_sock" {
+  type    = string
+  default = "unix:///var/run/docker.sock"
+}
+
 provider "docker" {
-  host = "unix:///var/run/docker.sock"
+  host = var.docker_sock
 }
