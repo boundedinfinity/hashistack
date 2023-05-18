@@ -10,6 +10,10 @@ terraform {
   }
 }
 
+variable "user" {
+  type = string
+}
+
 variable "name" {
   type    = string
   default = "consul-server"
@@ -40,15 +44,39 @@ variable "command" {
   type = list(string)
 }
 
+variable "publish_all_ports" {
+  type    = bool
+  default = false
+}
+
 variable "volumes" {
-  type = object({
+  type = list(object({
     host_path      = string
     container_path = string
-  })
+  }))
+}
+
+variable "ports" {
+  type = list(object({
+    internal = string
+    external = optional(string)
+    protocol = optional(string)
+    ip       = optional(string)
+  }))
 }
 
 locals {
   xdg_root = "${var.runtime_dir}/${var.name}"
+}
+
+locals {
+  all_volumes = concat([]
+    # [{
+    #   host_path      = local.xdg_root
+    #   container_path = "/root/.local"
+    # }],
+    # var.volumes
+  )
 }
 
 module "ensure_xdg" {
@@ -63,19 +91,30 @@ resource "docker_image" "image" {
 resource "docker_container" "container" {
   image = docker_image.image.image_id
   name  = var.name
+  # user  = var.user
+
+  publish_all_ports = var.publish_all_ports
 
   networks_advanced {
     name = var.network.id
   }
 
-  volumes {
-    host_path      = local.xdg_root
-    container_path = "/root/.local"
+  dynamic "volumes" {
+    for_each = local.all_volumes
+    content {
+      host_path      = volumes.value.host_path
+      container_path = volumes.value.container_path
+    }
   }
 
-  volumes {
-    host_path      = var.volumes.host_path
-    container_path = var.volumes.container_path
+  dynamic "ports" {
+    for_each = var.ports
+    content {
+      internal = ports.value.internal
+      external = ports.value.external
+      protocol = ports.value.protocol
+      ip       = ports.value.ip
+    }
   }
 
   env     = var.environment

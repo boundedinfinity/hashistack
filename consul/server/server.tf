@@ -1,11 +1,14 @@
 
+variable "user" {
+  type = string
+}
 
 variable "runtime_dir" {
   type = string
 }
 
 variable "instance" {
-  type = number
+  type = string
 }
 
 variable "datacenter" {
@@ -25,16 +28,13 @@ variable "name" {
   default = "consul-server"
 }
 
-module "common" {
-  source              = "../common"
-  name                = var.name
-  network_application = var.network_application
-  runtime_dir         = var.runtime_dir
-  datacenter          = var.datacenter
-  instance            = var.instance
+variable "retry_join" {
+  type    = string
+  default = ""
+}
 
-  # https://developer.hashicorp.com/consul/docs/agent/config/cli-flags
-  command = [
+locals {
+  base_command = [
     "consul", "agent", "-server", "-ui",
     "-node=${var.name}-${var.instance}",
     "-bootstrap-expect=${var.quorem}",
@@ -43,6 +43,23 @@ module "common" {
     # "-bind", "'{{ GetPrivateInterfaces | include \"network\" \"${one(var.network_application.ipam_config).subnet}\" | attr \"address\"}}'",
     # "-advertise", "'{{ GetPrivateInterfaces | include \"network\" \"${one(var.network_management.ipam_config).subnet}\" | attr \"address\"}}'"
   ]
+}
+
+locals {
+  command = var.retry_join != "" ? concat(local.base_command, ["-retry-join=${var.retry_join}"]) : local.base_command
+}
+
+module "common" {
+  source              = "../common"
+  name                = var.name
+  network_application = var.network_application
+  runtime_dir         = var.runtime_dir
+  datacenter          = var.datacenter
+  instance            = var.instance
+  user                = var.user
+
+  # https://developer.hashicorp.com/consul/docs/agent/config/cli-flags
+  command = local.command
 }
 
 output "hostname" {
