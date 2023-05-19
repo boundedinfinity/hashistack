@@ -65,6 +65,13 @@ variable "ports" {
   }))
 }
 
+variable "labels" {
+  type = list(object({
+    label = string
+    value = string
+  }))
+}
+
 locals {
   xdg_root = "${var.runtime_dir}/${var.name}"
 }
@@ -77,6 +84,14 @@ locals {
     # }],
     # var.volumes
   )
+
+  all_labels = (concat(
+    [{
+      label = "hashistack"
+      value = "true"
+    }],
+    var.labels
+  ))
 }
 
 module "ensure_xdg" {
@@ -89,16 +104,25 @@ resource "docker_image" "image" {
 }
 
 resource "docker_container" "container" {
-  image = docker_image.image.image_id
-  name  = var.name
-  # user  = var.user
-
+  image             = docker_image.image.image_id
+  name              = var.name
+  hostname          = var.name
   publish_all_ports = var.publish_all_ports
+  env               = var.environment
+  command           = var.command
+  # user  = var.user
 
   networks_advanced {
     name = var.network.id
   }
 
+  dynamic "labels" {
+    for_each = local.all_labels
+    content {
+      label = labels.value.label
+      value = labels.value.value
+    }
+  }
   dynamic "volumes" {
     for_each = local.all_volumes
     content {
@@ -116,9 +140,6 @@ resource "docker_container" "container" {
       ip       = ports.value.ip
     }
   }
-
-  env     = var.environment
-  command = var.command
 }
 
 output "hostname" {

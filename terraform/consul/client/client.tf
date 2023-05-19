@@ -24,7 +24,16 @@ variable "name" {
 }
 
 variable "retry_join" {
-  type    = string
+  type = string
+}
+
+locals {
+  labels = [
+    {
+      label = "consul"
+      value = "client"
+    }
+  ]
 }
 
 module "common" {
@@ -35,6 +44,7 @@ module "common" {
   datacenter          = var.datacenter
   instance            = var.instance
   user                = var.user
+  labels              = local.labels
 
   # https://developer.hashicorp.com/consul/docs/agent/config/cli-flags
   command = [

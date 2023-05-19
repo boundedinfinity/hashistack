@@ -43,6 +43,13 @@ locals {
     # "-bind", "'{{ GetPrivateInterfaces | include \"network\" \"${one(var.network_application.ipam_config).subnet}\" | attr \"address\"}}'",
     # "-advertise", "'{{ GetPrivateInterfaces | include \"network\" \"${one(var.network_management.ipam_config).subnet}\" | attr \"address\"}}'"
   ]
+
+  labels = [
+    {
+      label = "consul"
+      value = "server"
+    }
+  ]
 }
 
 locals {
@@ -57,6 +64,7 @@ module "common" {
   datacenter          = var.datacenter
   instance            = var.instance
   user                = var.user
+  labels              = local.labels
 
   # https://developer.hashicorp.com/consul/docs/agent/config/cli-flags
   command = local.command

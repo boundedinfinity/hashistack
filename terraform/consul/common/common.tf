@@ -55,6 +55,13 @@ variable "command" {
   type = list(string)
 }
 
+variable "labels" {
+  type = list(object({
+    label = string
+    value = string
+  }))
+}
+
 locals {
   qname    = "${var.name}-${var.instance}"
   data_dir = "${var.runtime_dir}/${local.qname}/data"
@@ -66,14 +73,15 @@ module "ensure_dir" {
 }
 
 module "docker" {
-  source            = "../../docker"
-  name              = local.qname
-  image             = var.docker_image
-  tag               = var.docker_tag
-  network           = var.network_application
-  runtime_dir       = var.runtime_dir
-  user              = var.user
-  environment       = var.environment
+  source      = "../../docker"
+  name        = local.qname
+  image       = var.docker_image
+  tag         = var.docker_tag
+  network     = var.network_application
+  runtime_dir = var.runtime_dir
+  user        = var.user
+  environment = var.environment
+  labels      = var.labels
   # publish_all_ports = true
 
   # https://developer.hashicorp.com/consul/docs/agent/config/cli-flags
