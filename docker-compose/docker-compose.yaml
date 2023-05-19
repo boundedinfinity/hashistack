@@ -1,0 +1,22 @@
+# https://docs.docker.com/compose/compose-file/compose-file-v3/
+version: '3'
+services:
+    workspace:
+        image: workspace
+        hostname: workspace
+        container_name: workspace
+        # user: "${UID}:${GID}"
+        build:
+            context: $script_dir/assets/build
+        environment:
+            HOST_RUNTIME_DIR: $script_dir/runtime
+        volumes:
+            - $script_dir/assets/workspace:/workspace:rw
+            - $script_dir/runtime/workspace/.config:/root/.config:rw
+            - $script_dir/runtime/workspace/.local:/root/.local:rw
+            - $script_dir/runtime/workspace/.cache:/root/.cache:rw
+            - /var/run/docker.sock:/var/run/docker.sock:rw
+
+networks:
+    cluster:
+        external: true

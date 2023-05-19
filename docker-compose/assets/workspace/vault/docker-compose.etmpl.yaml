@@ -1,0 +1,25 @@
+version: '3'
+services:
+    $NODE:
+        # https://hub.docker.com/_/vault
+        image: vault:1.13.1
+        container_name: $NODE
+        hostname: $NODE
+        cap_add:
+            - IPC_LOCK
+        environment:
+            SKIP_CHOWN: true
+            VAULT_ADDR: http://127.0.0.1:8200
+        volumes:
+            - $EXT_RUNTIME_DIR/$NODE/config:/vault/config
+            - $EXT_RUNTIME_DIR/$NODE/logs:/vault/logs
+            - $EXT_RUNTIME_DIR/$NODE/data:/var/vault
+        command: server
+        expose:
+            - 8200
+            - 8201
+        networks:
+            - cluster
+networks:
+    cluster:
+        external: true

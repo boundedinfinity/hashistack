@@ -1,0 +1,1 @@
+set -gx PASSWORD_STORE_DIR $HOME/.config/password-store

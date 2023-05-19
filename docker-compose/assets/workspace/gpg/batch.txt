@@ -1,0 +1,14 @@
+%echo Generating a default key
+Key-Type: default
+Key-Length: 4096
+Subkey-Type: default
+Subkey-Length: 4096
+Name-Real: Crypto User
+Name-Comment: The GPG keys used for this tutorial.
+Name-Email: crypto.user@server.com
+Expire-Date: 0
+# Passphrase: abc
+%no-protection
+# Do a commit here, so that we can later print "done" :-)
+%commit
+%echo done
