@@ -1,22 +1,210 @@
 # https://docs.docker.com/compose/compose-file/compose-file-v3/
+# https://hub.docker.com/r/hashicorp/consul
+# https://hub.docker.com/_/consul
+# https://hub.docker.com/r/hashicorp/vault
+# https://hub.docker.com/_/vault
+
+x-consul-template: &consul-template
+    image: hashicorp/consul:1.15.2
+    networks:
+        - hashistack
+    expose:
+        - 8300/tcp
+        - 8301/tcp
+        - 8301/udp
+        - 8302/udp
+        - 8500/tcp
+        - 8501/tcp
+        - 8502/tcp
+        - 8503/tcp
+        - 8600/tcp
+        - 8600/udp
+x-consul-command-server: &consul-command-server
+    - consul 
+    - agent 
+    - -server 
+    - -ui
+    - -bootstrap-expect=3
+    - -data-dir=/consul/data
+    - -datacenter=hashistack
+
 version: '3'
 services:
-    workspace:
-        image: workspace
-        hostname: workspace
-        container_name: workspace
-        # user: "${UID}:${GID}"
-        build:
-            context: $script_dir/assets/build
-        environment:
-            HOST_RUNTIME_DIR: $script_dir/runtime
+    vault-server-0:
+        image: hashicorp/vault:1.13.2
+        hostname: vault-server-0
+        container_name: vault-server-0
+        networks:
+            - hashistack
+        expose:
+            - 8200/tcp
+            - 8200/udp
+
+    consul-server-0:
+        <<: *consul-template
+        hostname: consul-server-0
+        container_name: consul-server-0
+        command:
+            - << *consul-command-server
+            - -node=consul-server-0
         volumes:
-            - $script_dir/assets/workspace:/workspace:rw
-            - $script_dir/runtime/workspace/.config:/root/.config:rw
-            - $script_dir/runtime/workspace/.local:/root/.local:rw
-            - $script_dir/runtime/workspace/.cache:/root/.cache:rw
+            - consul-server-0-xdg-config:/root/.config
+            - consul-server-0-xdg-cache:/root/.cache
+            - consul-server-0-xdg-local:/root/.local
+            - consul-server-0-consul-data:/consul/data
             - /var/run/docker.sock:/var/run/docker.sock:rw
+        labels:
+            org.boundedinfinity.consul.server: true
+            org.boundedinfinity.consul.root: true        
+    consul-server-1:
+        <<: *consul-template
+        hostname: consul-server-1
+        container_name: consul-server-1
+        command:
+            - << *consul-command-server
+            - -node=consul-server-1
+            - -retry-join=consul-server-0
+        volumes:
+            - consul-server-1-xdg-config:/root/.config
+            - consul-server-1-xdg-cache:/root/.cache
+            - consul-server-1-xdg-local:/root/.local
+            - consul-server-1-consul-data:/consul/data
+            - /var/run/docker.sock:/var/run/docker.sock:rw
+        labels:
+            org.boundedinfinity.consul.server: true
+            org.boundedinfinity.consul.root: false
+    consul-server-2:
+        <<: *consul-template
+        hostname: consul-server-2
+        container_name: consul-server-2
+        command:
+            - << *consul-command-server
+            - -node=consul-server-2
+            - -retry-join=consul-server-0
+        volumes:
+            - consul-server-2-xdg-config:/root/.config
+            - consul-server-2-xdg-cache:/root/.cache
+            - consul-server-2-xdg-local:/root/.local
+            - consul-server-2-consul-data:/consul/data
+            - /var/run/docker.sock:/var/run/docker.sock:rw
+        labels:
+            org.boundedinfinity.consul.server: true
+            org.boundedinfinity.consul.root: false
+    consul-server-3:
+        <<: *consul-template
+        hostname: consul-server-3
+        container_name: consul-server-3
+        command:
+            - << *consul-command-server
+            - -node=consul-server-3
+            - -retry-join=consul-server-0
+        volumes:
+            - consul-server-3-xdg-config:/root/.config
+            - consul-server-3-xdg-cache:/root/.cache
+            - consul-server-3-xdg-local:/root/.local
+            - consul-server-3-consul-data:/consul/data
+            - /var/run/docker.sock:/var/run/docker.sock:rw
+        labels:
+            org.boundedinfinity.consul.server: true
+            org.boundedinfinity.consul.root: false
+    consul-server-4:
+        <<: *consul-template
+        hostname: consul-server-4
+        container_name: consul-server-4
+        command:
+            - << *consul-command-server
+            - -node=consul-server-4
+            - -retry-join=consul-server-0
+        volumes:
+            - consul-server-4-xdg-config:/root/.config
+            - consul-server-4-xdg-cache:/root/.cache
+            - consul-server-4-xdg-local:/root/.local
+            - consul-server-4-consul-data:/consul/data
+            - /var/run/docker.sock:/var/run/docker.sock:rw
+        labels:
+            org.boundedinfinity.consul.server: true
+            org.boundedinfinity.consul.root: false
+    consul-server-5:
+        <<: *consul-template
+        hostname: consul-server-5
+        container_name: consul-server-5
+        command:
+            - << *consul-command-server
+            - -node=consul-server-5
+            - -retry-join=consul-server-0
+        volumes:
+            - consul-server-5-xdg-config:/root/.config
+            - consul-server-5-xdg-cache:/root/.cache
+            - consul-server-5-xdg-local:/root/.local
+            - consul-server-5-consul-data:/consul/data
+            - /var/run/docker.sock:/var/run/docker.sock:rw
+        labels:
+            org.boundedinfinity.consul.server: true
+            org.boundedinfinity.consul.root: false
+    consul-client-0:
+        <<: *consul-template
+        hostname: consul-client-0
+        container_name: consul-client-0
+        command:
+            - consul 
+            - agent 
+            - -ui
+            - -node=consul-client-0
+            - -data-dir=/consul/data
+            - -datacenter=hashistack
+            - -retry-join=consul-server-0
+            - -retry-join=consul-server-1
+            - -retry-join=consul-server-2
+            - -retry-join=consul-server-3
+            - -retry-join=consul-server-4
+        volumes:
+            - consul-client-0-xdg-config:/root/.config
+            - consul-client-0-xdg-cache:/root/.cache
+            - consul-client-0-xdg-local:/root/.local
+            - consul-client-0-consul-data:/consul/data
+            - /var/run/docker.sock:/var/run/docker.sock:rw
+        labels:
+            org.boundedinfinity.consul.client: true
 
 networks:
-    cluster:
-        external: true
+    hashistack:
+
+volumes:
+    consul-server-0-xdg-config:
+    consul-server-0-xdg-cache:
+    consul-server-0-xdg-local:
+    consul-server-0-consul-data:
+    consul-server-1-xdg-config:
+    consul-server-1-xdg-cache:
+    consul-server-1-xdg-local:
+    consul-server-1-consul-data:
+    consul-server-2-xdg-config:
+    consul-server-2-xdg-cache:
+    consul-server-2-xdg-local:
+    consul-server-2-consul-data:
+    consul-server-3-xdg-config:
+    consul-server-3-xdg-cache:
+    consul-server-3-xdg-local:
+    consul-server-3-consul-data:
+    consul-server-4-xdg-config:
+    consul-server-4-xdg-cache:
+    consul-server-4-xdg-local:
+    consul-server-4-consul-data:
+    consul-server-5-xdg-config:
+    consul-server-5-xdg-cache:
+    consul-server-5-xdg-local:
+    consul-server-5-consul-data:
+    consul-client-0-xdg-config:
+    consul-client-0-xdg-cache:
+    consul-client-0-xdg-local:
+    consul-client-0-consul-data:
+    
+x-refs:
+    docker_sock: 
+        volumes: &docker_sock
+            - /var/run/docker.sock:/var/run/docker.sock:rw
+    # https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+    xdg_config_home: /root/.config
+    xdg_cache_home: /root/.cache
+    xdg_local_home: /root/.local
+
